@@ -18,20 +18,25 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		app.serverError(w, r, err)
 		return
 	}
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
+	files := []string{
+		"./ui/html/base.tmpl",
+		"./ui/html/partials/nav.tmpl",
+		"./ui/html/pages/home.tmpl",
 	}
-	// files := []string{
-	// 	"./ui/html/base.tmpl",
-	// 	"./ui/html/partials/nav.tmpl",
-	// 	"./ui/html/pages/home.tmpl",
-	// }
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// 	return
-	// }
-	// err = ts.ExecuteTemplate(w, "base", nil)
+	ts, err := template.ParseFiles(files...)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	//Create an instance of the templateData struct holding the slice of snippets.
+	data := templateData{
+		Snippets: snippets,
+	}
+	//Pass in the templateData struct when executing the template.
+	err = ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		app.serverError(w, r, err)
+	}
 	// if err != nil {
 	// 	app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
 	// 	app.serverError(w, r, err)
@@ -46,7 +51,6 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	}
 	snippet, err := app.snippets.Get(id)
 	if err != nil {
-		fmt.Println("Error in Getting by Id from DB &&&&")
 		if errors.Is(err, models.ErrNoRecord) {
 			http.NotFound(w, r)
 		} else {
@@ -62,14 +66,16 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	}
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		fmt.Println("Error in parsing***")
 		app.serverError(w, r, err)
 		return
 	}
 
-	err = ts.ExecuteTemplate(w, "base", snippet)
+	data := templateData{
+		Snippet: snippet,
+	}
+
+	err = ts.ExecuteTemplate(w, "base", data)
 	if err != nil {
-		fmt.Println("Error in executing template!!!")
 		app.serverError(w, r, err)
 	}
 	//	fmt.Fprintf(w, "%+v", snippet)
