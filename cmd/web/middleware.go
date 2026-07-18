@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -27,6 +28,25 @@ func (app *application) logRequest(next http.Handler) http.Handler {
 			uri    = r.URL.RequestURI()
 		)
 		app.logger.Info("received request", "ip", ip, "proto", proto, "method", method, "uri", uri)
+		next.ServeHTTP(w, r)
+	})
+
+}
+
+func (app *application) recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			pv := recover()
+
+			//if a panic did happen
+			if pv != nil {
+				//set a "Connection: close" header on the response
+				w.Header().Set("Connection", "close")
+				//call the app.serverError helper method to log the error and send a 500 Internal Server Error response to the user
+				app.serverError(w, r, fmt.Errorf("%v", pv))
+			}
+		}()
+
 		next.ServeHTTP(w, r)
 	})
 
