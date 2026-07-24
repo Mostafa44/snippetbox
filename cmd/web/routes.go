@@ -13,11 +13,13 @@ func (app *application) routes() http.Handler {
 
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	mux.HandleFunc("GET /{$}", app.home) // restrict this route to exact matches on / only
-	mux.HandleFunc("GET /snippet/view/{id}", app.snippetView)
-	mux.HandleFunc("GET /snippet/create", app.snippetCreate)
+	dynamic := alice.New(app.sessionManager.LoadAndSave)
 
-	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
+	mux.Handle("GET /{$}", dynamic.ThenFunc(app.home)) // restrict this route to exact matches on / only
+	mux.Handle("GET /snippet/view/{id}", dynamic.ThenFunc(app.snippetView))
+	mux.Handle("GET /snippet/create", dynamic.ThenFunc(app.snippetCreate))
+
+	mux.Handle("POST /snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
 
 	//Create a middleware chain containing our 'standard' middleware
 	// which will be used for every request our application receives.
