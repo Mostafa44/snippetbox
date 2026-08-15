@@ -13,7 +13,7 @@ func (app *application) routes() http.Handler {
 
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
-	dynamic := alice.New(app.sessionManager.LoadAndSave)
+	dynamic := alice.New(app.sessionManager.LoadAndSave, preventCSRF)
 
 	mux.Handle("GET /{$}", dynamic.ThenFunc(app.home)) // restrict this route to exact matches on / only
 	mux.Handle("GET /snippet/view/{id}", dynamic.ThenFunc(app.snippetView))
